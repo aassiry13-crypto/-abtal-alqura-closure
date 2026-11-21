@@ -228,6 +228,19 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
 .modal .box .row{display:flex;gap:8px;flex-wrap:wrap}
 .modal .box .row .sp{flex:1}
 .modal .box .row.col{flex-direction:column}
+.lockscr{position:fixed;inset:0;z-index:40;background:linear-gradient(135deg,var(--navy),#163f80 55%,var(--blue));display:none;place-items:center;padding:16px}
+.lockscr.open{display:grid}
+.lbox{background:#fff;border-radius:20px;padding:26px 22px;width:min(380px,100%);text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.lbox .lic{font-size:46px}
+.lbox .lorg{color:var(--muted);font-size:13px}
+.lbox h2{margin:4px 0 16px;color:var(--navy);font-size:21px}
+.lbox label{display:block;font-weight:700;color:var(--navy);font-size:14px;margin-bottom:6px}
+.lbox input#pinIn{width:100%;font-size:24px;letter-spacing:8px;text-align:center;border:1.5px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.lbox .rem{font-weight:500;color:var(--muted);font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:12px}
+.lbox .btn{width:100%;padding:12px;font-size:16px}
+.lbox .lerr{color:var(--not);font-size:13px;min-height:20px;margin-top:8px}
+details.owner{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+details.owner summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:14px}
 #syncBtn.ok{color:var(--done);border-color:#bfe0c9}
 #syncBtn.warn{color:#9a6a08;border-color:#f0d9a0}
 #syncBtn.err{color:var(--not);border-color:#f3c2c2}
@@ -322,7 +335,7 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
       <button class="chip" data-f="appr">يحتاج اعتماد</button>
       <button class="chip" data-f="not">لم يتم</button>
     </div>
-    <div class="filters"><button class="btn btn-ghost hide" id="syncBtn">☁️ المزامنة: <span id="syncSt">غير مفعّلة</span></button>
+    <div class="filters"><button class="btn btn-ghost hide" id="syncBtn">☁️ الحفظ في GitHub: <span id="syncSt">غير مفعّلة</span></button>
     <button class="btn btn-ghost" id="resetBtn">↺ إعادة التعيين</button></div>
   </div>
 
@@ -372,20 +385,19 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
     <button class="btn btn-ghost" id="sigCancel">إلغاء</button>
   </div></div></div>
 <div class="modal" id="syncModal"><div class="box syncbox">
-  <h4>☁️ مزامنة البيانات بين الأجهزة</h4>
-  <p>تُحفظ البيانات في مستودع <b>خاص</b> على GitHub، فيراها كل جهاز يُدخل نفس المفتاح.</p>
-  <ol class="steps">
-    <li>أنشئ مستودعًا <b>Private</b> باسم <code>abtal-alqura-data</code> من <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a>.</li>
-    <li>أنشئ مفتاحًا من <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">صفحة المفاتيح</a>: في Repository access اختر <b>Only select repositories</b> ثم المستودع السابق، وفي Permissions اجعل <b>Contents</b> على <b>Read and write</b>، ثم Generate وانسخ المفتاح.</li>
-    <li>ألصقه هنا واضغط «حفظ واتصال». كرّر الخطوة الأخيرة فقط على كل جهاز.</li>
-  </ol>
-  <div class="fld"><label>المستودع</label><input id="syncRepo" dir="ltr" placeholder="aassiry13-crypto/abtal-alqura-data"></div>
-  <div class="fld"><label>المفتاح (Token)</label><input id="syncToken" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_..."></div>
-  <p class="note2">يُحفظ المفتاح في هذا الجهاز فقط. لا تشاركه إلا مع أعضاء اللجنة بطريقة خاصة.</p>
-  <div class="row"><button class="btn btn-green" id="syncConnect">حفظ واتصال</button>
-    <button class="btn btn-ghost" id="syncPullBtn">🔄 تحميل أحدث نسخة</button><span class="sp"></span>
-    <button class="btn btn-ghost" id="syncOff" style="color:#c33">إيقاف المزامنة</button>
+  <h4>☁️ الحفظ والمزامنة</h4>
+  <p id="syncInfo">—</p>
+  <div class="row"><button class="btn btn-primary" id="syncPullBtn">🔄 تحميل أحدث نسخة</button>
+    <button class="btn btn-ghost" id="logoutBtn" style="color:#c33">تسجيل الخروج</button><span class="sp"></span>
     <button class="btn btn-ghost" id="syncClose">إغلاق</button></div>
+  <details class="owner"><summary>🔑 إعداد صاحب المشروع (مرة واحدة)</summary>
+    <p class="note2">ألصق مفتاح GitHub واختر الرقم السري. تشفّر الصفحة المفتاح بالرقم السري وتنشره في المستودع، وبعدها يدخل أي جهاز بالرقم السري فقط.</p>
+    <div class="fld"><label>مفتاح GitHub (Token)</label><input id="ownToken" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_..."></div>
+    <div class="fld"><label>الرقم السري</label><input id="ownPin" type="password" inputmode="numeric" dir="ltr" autocomplete="new-password"></div>
+    <div class="fld"><label>تأكيد الرقم السري</label><input id="ownPin2" type="password" inputmode="numeric" dir="ltr" autocomplete="new-password"></div>
+    <div class="fld"><label>المستودع</label><input id="ownRepo" dir="ltr"></div>
+    <button class="btn btn-green" id="ownSave">حفظ ونشر</button>
+  </details>
 </div></div>
 <div class="modal" id="conflictModal"><div class="box">
   <h4>عُدّلت البيانات من جهاز آخر</h4>
@@ -393,6 +405,16 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
   <div class="row col"><button class="btn btn-primary" id="cfTheirs">⬇ اعتماد نسخة الجهاز الآخر (تُلغى تغييرات هذا الجهاز)</button>
     <button class="btn btn-ghost" id="cfMine">⬆ اعتماد نسخة هذا الجهاز (تُستبدل نسخة الجهاز الآخر)</button>
     <button class="btn btn-ghost" id="cfCancel">لاحقًا</button></div>
+</div></div>
+<div class="lockscr" id="lockscr"><div class="lbox">
+  <div class="lic">🏆</div>
+  <div class="lorg">جمعية التنمية الأهلية بالحريضة</div>
+  <h2>خطة إغلاق مشروع أبطال القرى</h2>
+  <label for="pinIn">أدخل الرقم السري</label>
+  <input id="pinIn" type="password" inputmode="numeric" autocomplete="current-password" dir="ltr">
+  <label class="rem"><input type="checkbox" id="pinRem" checked> تذكّرني على هذا الجهاز</label>
+  <button class="btn btn-primary" id="pinGo">دخول</button>
+  <div class="lerr" id="pinErr"></div>
 </div></div>
 <div class="toast" id="toast"></div>
 
@@ -1035,33 +1057,62 @@ function bindSig(){
   };
 }
 
-/* ================= Cloud sync (private GitHub repo) ================= */
-const SYNC_KEY="abtal-qura-sync";
+/* ================= Cloud sync + PIN login ================= */
+const SYNC_KEY="abtal-qura-sync", SYNC_FILE="data.json", AUTH_FILE="auth.json";
 let sync=(()=>{try{return readJSON(localStorage.getItem(SYNC_KEY))}catch(e){return {}}})();
-const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
+let AUTH=null;
+const saveSync=()=>{try{ if(sync.viaPin&&!sync.remember){ localStorage.removeItem(SYNC_KEY); return } localStorage.setItem(SYNC_KEY,JSON.stringify(sync)) }catch(e){}};
 const syncOn=()=>!IN_CLAUDE&&!!(sync.repo&&sync.token);
-const SYNC_FILE="data.json";
-function utf8ToB64(str){ const b=new TextEncoder().encode(str); let s=""; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s) }
-function b64ToUtf8(b64){ const bin=atob(b64.replace(/\s/g,"")), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return new TextDecoder().decode(u) }
-async function gh(path,opt={}){
-  const h={Authorization:"Bearer "+sync.token,"X-GitHub-Api-Version":"2022-11-28",Accept:opt.accept||"application/vnd.github+json"};
+const bytesToB64=u=>{let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+const b64ToBytes=b=>{const bin=atob(b.replace(/\s/g,"")),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u};
+const utf8ToB64=str=>bytesToB64(new TextEncoder().encode(str));
+const b64ToUtf8=b=>new TextDecoder().decode(b64ToBytes(b));
+async function pinKey(pin,salt,iter){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pin),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+async function encryptToken(token,pin,repo,branch){
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12)), iter=310000;
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},await pinKey(pin,salt,iter),new TextEncoder().encode(token)));
+  return {v:1,repo,branch,iter,salt:bytesToB64(salt),iv:bytesToB64(iv),ct:bytesToB64(ct)};
+}
+async function decryptToken(a,pin){
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(a.iv)},await pinKey(pin,b64ToBytes(a.salt),a.iter),b64ToBytes(a.ct));
+  return new TextDecoder().decode(pt);
+}
+async function gh(path,opt={},tok){
+  const h={Authorization:"Bearer "+(tok||sync.token),"X-GitHub-Api-Version":"2022-11-28",Accept:opt.accept||"application/vnd.github+json"};
   if(opt.body) h["Content-Type"]="application/json";
   return fetch("https://api.github.com"+path,{method:opt.method||"GET",headers:h,body:opt.body,cache:"no-store"});
 }
-const repoPath=()=>"/repos/"+sync.repo.split("/").map(encodeURIComponent).join("/");
+const repoPathOf=r=>"/repos/"+r.split("/").map(encodeURIComponent).join("/");
+const repoPath=()=>repoPathOf(sync.repo);
+const refQ=()=>sync.branch?`?ref=${encodeURIComponent(sync.branch)}`:"";
+async function ensureBranch(repo,branch,tok){
+  const r=await gh(`${repoPathOf(repo)}/git/ref/heads/${encodeURIComponent(branch)}`,{},tok);
+  if(r.ok) return;
+  if(r.status!==404) throw {status:r.status};
+  const info=await gh(repoPathOf(repo),{},tok); if(!info.ok) throw {status:info.status};
+  const def=(await info.json()).default_branch||"main";
+  const m=await gh(`${repoPathOf(repo)}/git/ref/heads/${encodeURIComponent(def)}`,{},tok); if(!m.ok) throw {status:m.status};
+  const sha=(await m.json()).object.sha;
+  const c=await gh(`${repoPathOf(repo)}/git/refs`,{method:"POST",body:JSON.stringify({ref:"refs/heads/"+branch,sha})},tok);
+  if(!c.ok&&c.status!==422) throw {status:c.status};
+}
 async function pullRemote(){
-  const m=await gh(`${repoPath()}/contents/${SYNC_FILE}`);
-  if(m.status===404){ const r=await gh(repoPath()); if(!r.ok) throw {status:r.status,repo:true}; return {sha:null,data:null} }
+  const m=await gh(`${repoPath()}/contents/${SYNC_FILE}${refQ()}`);
+  if(m.status===404){ const r=await gh(repoPath()); if(!r.ok) throw {status:r.status,repo:true}; if(sync.branch) await ensureBranch(sync.repo,sync.branch); return {sha:null,data:null} }
   if(!m.ok) throw {status:m.status};
   const meta=await m.json(); let text;
   if(meta.content&&meta.encoding==="base64") text=b64ToUtf8(meta.content);
-  else{ const r=await gh(`${repoPath()}/contents/${SYNC_FILE}`,{accept:"application/vnd.github.raw+json"}); if(!r.ok) throw {status:r.status}; text=await r.text() }
+  else{ const r=await gh(`${repoPath()}/contents/${SYNC_FILE}${refQ()}`,{accept:"application/vnd.github.raw+json"}); if(!r.ok) throw {status:r.status}; text=await r.text() }
   return {sha:meta.sha,data:readJSON(text)};
 }
 async function pushRemote(){
   const body={message:"تحديث بيانات خطة الإغلاق — "+new Date().toISOString(),content:utf8ToB64(JSON.stringify(state))};
-  if(sync.sha) body.sha=sync.sha;
-  const r=await gh(`${repoPath()}/contents/${SYNC_FILE}`,{method:"PUT",body:JSON.stringify(body)});
+  if(sync.sha) body.sha=sync.sha; if(sync.branch) body.branch=sync.branch;
+  let r=await gh(`${repoPath()}/contents/${SYNC_FILE}`,{method:"PUT",body:JSON.stringify(body)});
+  if(r.status===404&&sync.branch){ await ensureBranch(sync.repo,sync.branch); r=await gh(`${repoPath()}/contents/${SYNC_FILE}`,{method:"PUT",body:JSON.stringify(body)}) }
   if(r.status===409||r.status===422) throw {conflict:true,status:r.status};
   if(!r.ok) throw {status:r.status};
   const j=await r.json(); sync.sha=j.content.sha; sync.pending=false; sync.at=Date.now(); saveSync();
@@ -1077,12 +1128,9 @@ function refreshSyncStatus(){
   const t=sync.at?new Date(sync.at).toLocaleTimeString("ar-SA-u-nu-latn",{hour:"2-digit",minute:"2-digit"}):"";
   syncStatus("ok","متزامنة ✔ "+t);
 }
-const syncErrMsg=e=>e&&e.status===401?"المفتاح غير صالح أو انتهت صلاحيته":e&&(e.status===403||e.status===404)?"المستودع غير موجود أو المفتاح لا يملك صلاحية عليه":"تعذّر الاتصال بـGitHub؛ تحقّق من الإنترنت";
+const syncErrMsg=e=>e&&e.status===401?"المفتاح غير صالح أو انتهت صلاحيته":e&&(e.status===403||e.status===404)?"المفتاح لا يملك صلاحية الكتابة على المستودع (Contents: Read and write)":"تعذّر الاتصال بـGitHub؛ تحقّق من الإنترنت";
 function localHasData(){ return Object.keys(state.s||{}).length>0||Object.keys(state.sheets||{}).length>0||Object.keys(state.sign||{}).length>0 }
-function rerenderAll(){
-  document.querySelectorAll("[data-sg]").forEach(el=>el.value=state.sign[el.dataset.sg]||"");
-  renderFinalSigs(); render();
-}
+function rerenderAll(){ document.querySelectorAll("[data-sg]").forEach(el=>el.value=state.sign[el.dataset.sg]||""); renderFinalSigs(); render(); }
 let pendingRemote=null;
 async function adoptRemote(r){
   state=migrate18(r.data); sync.sha=r.sha; sync.pending=false; sync.at=Date.now(); saveSync();
@@ -1093,50 +1141,99 @@ async function syncPull(manual){
   if(!syncOn()) return;
   if(manual) toast("جارٍ تحميل أحدث نسخة…");
   let r; try{ r=await pullRemote() }catch(e){ syncStatus("err","خطأ"); if(manual) toast(syncErrMsg(e)); return }
-  if(!r.data){ // remote empty
-    if(localHasData()){ sync.pending=true; saveSync(); await pushNow(); } else { sync.sha=null; saveSync(); refreshSyncStatus(); if(manual) toast("لا توجد بيانات محفوظة في السحابة بعد"); }
+  if(!r.data){
+    if(localHasData()){ sync.pending=true; saveSync(); await pushNow(); } else { sync.sha=null; saveSync(); refreshSyncStatus(); if(manual) toast("لا توجد بيانات محفوظة بعد"); }
     return;
   }
-  if(r.sha===sync.sha&&!sync.pending){ refreshSyncStatus(); if(manual) toast("لديك أحدث نسخة ✔"); return }
-  if(sync.pending||(dirty&&r.sha!==sync.sha)){
-    if(r.sha===sync.sha){ if(sync.pending) await pushNow(); else refreshSyncStatus(); return } // nothing new remotely: send local changes
+  if(r.sha===sync.sha&&!sync.pending&&!dirty){ refreshSyncStatus(); if(manual) toast("لديك أحدث نسخة ✔"); return }
+  if(sync.pending||dirty){
+    if(r.sha===sync.sha){ if(sync.pending) await pushNow(); else refreshSyncStatus(); return }
     pendingRemote=r; $("conflictModal").classList.add("open"); return;
   }
-  await adoptRemote(r); toast("تم تحميل أحدث نسخة من الأجهزة الأخرى ✔");
+  await adoptRemote(r); toast("تم تحميل أحدث نسخة ✔");
 }
 async function pushNow(){
   syncStatus("warn","جارٍ الرفع…");
   try{ await pushRemote(); refreshSyncStatus(); toast("تم الحفظ والمزامنة ✔ ستظهر التغييرات في الأجهزة الأخرى"); return true }
   catch(e){
-    if(e&&e.conflict){ try{ pendingRemote=await pullRemote(); }catch(_){ pendingRemote=null }
-      if(pendingRemote&&pendingRemote.data){ $("conflictModal").classList.add("open"); syncStatus("warn","تعارض") ; return false }
+    if(e&&e.conflict){ try{ pendingRemote=await pullRemote() }catch(_){ pendingRemote=null }
+      if(pendingRemote&&pendingRemote.data){ $("conflictModal").classList.add("open"); syncStatus("warn","تعارض"); return false }
       sync.sha=pendingRemote?pendingRemote.sha:null; saveSync(); return pushNow(); }
     syncStatus("err","لم تُرفع"); toast("حُفظ في هذا الجهاز فقط — "+syncErrMsg(e)); return false;
   }
 }
+/* repo of this page, from its GitHub Pages address */
+function pageRepo(){
+  const h=location.hostname, seg=location.pathname.split("/").filter(Boolean)[0];
+  if(/\.github\.io$/i.test(h)&&seg) return h.split(".")[0]+"/"+decodeURIComponent(seg);
+  return "";
+}
+async function loadAuth(){
+  try{ const r=await fetch(AUTH_FILE+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const a=await r.json(); return a&&a.ct?a:null }catch(e){ return null }
+}
+function showLock(){ $("lockscr").classList.add("open"); document.body.classList.add("lock"); setTimeout(()=>{try{$("pinIn").focus()}catch(e){}},50) }
+function hideLock(){ $("lockscr").classList.remove("open"); if(cur===null) document.body.classList.remove("lock") }
+async function tryPin(){
+  const pin=$("pinIn").value; if(!pin){ $("pinErr").textContent="أدخل الرقم السري"; return }
+  $("pinErr").textContent="جارٍ التحقق…";
+  let token; try{ token=await decryptToken(AUTH,pin) }catch(e){ $("pinErr").textContent="الرقم السري غير صحيح"; $("pinIn").select(); return }
+  const same=sync.repo===AUTH.repo&&sync.branch===AUTH.branch;
+  sync={repo:AUTH.repo,branch:AUTH.branch,token,viaPin:true,remember:$("pinRem").checked,sha:same?sync.sha:null,pending:same?!!sync.pending:localHasData(),at:same?sync.at:0};
+  saveSync(); $("pinIn").value=""; $("pinErr").textContent=""; hideLock(); refreshSyncStatus(); await syncPull(false);
+}
 function bindSync(){
   if(IN_CLAUDE) return;
   const m=$("syncModal");
-  $("syncBtn").onclick=()=>{ $("syncRepo").value=sync.repo||"aassiry13-crypto/abtal-alqura-data"; $("syncToken").value=sync.token||""; $("syncOff").classList.toggle("hide",!syncOn()); $("syncPullBtn").classList.toggle("hide",!syncOn()); m.classList.add("open") };
-  $("syncClose").onclick=()=>m.classList.remove("open");
-  $("syncConnect").onclick=async()=>{
-    const repo=trim($("syncRepo").value).replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,""), token=trim($("syncToken").value);
-    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ toast("اكتب المستودع بالشكل: الحساب/الاسم"); return }
-    if(!token){ toast("ألصق المفتاح أولًا"); return }
-    const prev={...sync}; sync={repo,token,sha:null,pending:localHasData(),at:0};
-    toast("جارٍ الاتصال…");
-    try{ const r=await gh(repoPath()); if(!r.ok) throw {status:r.status}; }
-    catch(e){ sync=prev; toast(syncErrMsg(e)); return }
-    saveSync(); m.classList.remove("open"); toast("تم الاتصال ✔"); await syncPull(false); refreshSyncStatus();
+  $("syncBtn").onclick=()=>{
+    $("syncInfo").textContent=syncOn()?`البيانات تُحفظ تلقائيًا في GitHub عند الضغط على «حفظ». المستودع: ${sync.repo}${sync.branch?" (فرع "+sync.branch+")":""}.`:"المزامنة غير مفعّلة على هذا الجهاز. إذا كان صاحب المشروع قد أعدّ الرقم السري، سجّل الخروج ثم ادخل بالرقم السري.";
+    $("syncPullBtn").classList.toggle("hide",!syncOn()); $("logoutBtn").classList.toggle("hide",!syncOn()&&!AUTH);
+    $("ownRepo").value=(AUTH&&AUTH.repo)||pageRepo()||sync.repo||"";
+    m.classList.add("open");
   };
+  $("syncClose").onclick=()=>m.classList.remove("open");
   $("syncPullBtn").onclick=()=>{ m.classList.remove("open"); syncPull(true) };
-  $("syncOff").onclick=()=>{ sync={}; saveSync(); m.classList.remove("open"); refreshSyncStatus(); toast("أُوقفت المزامنة في هذا الجهاز") };
+  $("logoutBtn").onclick=()=>{ sync={}; try{localStorage.removeItem(SYNC_KEY)}catch(e){} m.classList.remove("open"); refreshSyncStatus(); if(AUTH) showLock(); toast("تم تسجيل الخروج") };
+  $("ownSave").onclick=async()=>{
+    const token=trim($("ownToken").value), pin=$("ownPin").value, pin2=$("ownPin2").value;
+    const repo=trim($("ownRepo").value).replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,"");
+    if(!token){ toast("ألصق المفتاح أولًا"); return }
+    if(!pin||pin!==pin2){ toast("الرقم السري وتأكيده غير متطابقين"); return }
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ toast("اكتب المستودع بالشكل: الحساب/الاسم"); return }
+    const btn=$("ownSave"); btn.disabled=true; toast("جارٍ التحقق من المفتاح…");
+    try{
+      const info=await gh(repoPathOf(repo),{},token); if(!info.ok) throw {status:info.status};
+      const def=(await info.json()).default_branch||"main";
+      await ensureBranch(repo,"data",token);
+      const a=await encryptToken(token,pin,repo,"data");
+      const ex=await gh(`${repoPathOf(repo)}/contents/${AUTH_FILE}?ref=${encodeURIComponent(def)}`,{},token);
+      const body={message:"إعداد الدخول برقم سري",content:utf8ToB64(JSON.stringify(a)),branch:def};
+      if(ex.ok) body.sha=(await ex.json()).sha;
+      const w=await gh(`${repoPathOf(repo)}/contents/${AUTH_FILE}`,{method:"PUT",body:JSON.stringify(body)},token);
+      if(!w.ok) throw {status:w.status};
+      AUTH=a; sync={repo,branch:"data",token,viaPin:true,remember:true,sha:null,pending:localHasData(),at:0}; saveSync();
+      $("ownToken").value=$("ownPin").value=$("ownPin2").value="";
+      m.classList.remove("open"); refreshSyncStatus(); await syncPull(false);
+      toast("تم ✔ بعد دقيقة أو دقيقتين افتح الرابط من أي جهاز وادخل بالرقم السري");
+    }catch(e){ toast(syncErrMsg(e)) }
+    finally{ btn.disabled=false }
+  };
   $("cfTheirs").onclick=async()=>{ $("conflictModal").classList.remove("open"); if(pendingRemote&&pendingRemote.data){ await adoptRemote(pendingRemote); toast("اعتُمدت نسخة الجهاز الآخر ✔") } pendingRemote=null };
   $("cfMine").onclick=async()=>{ $("conflictModal").classList.remove("open"); if(pendingRemote) sync.sha=pendingRemote.sha; sync.pending=true; saveSync(); pendingRemote=null; await pushNow() };
   $("cfCancel").onclick=()=>{ $("conflictModal").classList.remove("open"); pendingRemote=null; refreshSyncStatus() };
+  $("pinGo").onclick=tryPin;
+  $("pinIn").addEventListener("keydown",e=>{ if(e.key==="Enter") tryPin() });
   let lastPull=Date.now();
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&syncOn()&&!dirty&&cur===null&&!sync.pending&&Date.now()-lastPull>15000){ lastPull=Date.now(); syncPull(false) } });
   refreshSyncStatus();
+}
+async function startSync(){
+  if(IN_CLAUDE) return;
+  AUTH=await loadAuth();
+  if(AUTH){
+    const ok=syncOn()&&sync.viaPin&&sync.repo===AUTH.repo&&sync.branch===AUTH.branch;
+    if(!ok){ showLock(); return }
+  }
+  if(syncOn()) await syncPull(false);
 }
 
 /* ================= Library loader ================= */
@@ -1323,7 +1420,7 @@ async function boot(){
   render();
   bindSync();
   window.__ready=true;
-  if(syncOn()){ if(sync.pending) refreshSyncStatus(); await syncPull(false); }
+  await startSync();
 }
 window.__t={syncPull:m=>syncPull(m),state:()=>state,setState:s=>{state=migrate18(s);render()},buildDoc,buildHTML,openSheet,model,tourney,exportPDF,persist,ids:()=>ALL.map(a=>a.id)};
 boot();
