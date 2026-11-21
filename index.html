@@ -217,6 +217,20 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
 .stg{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:8px;align-items:end}
 .lockmsg{flex-basis:100%;font-size:12.5px;color:#9a6a08}
 .sigbtn:disabled{opacity:.5;cursor:default}
+.modal .box.syncbox{max-width:520px;text-align:right}
+.modal .box h4{margin:0 0 6px;color:var(--navy);font-size:18px}
+.modal .box .steps{margin:0 0 12px;padding-inline-start:20px;font-size:13.5px;color:var(--ink)}
+.modal .box .steps li{margin-bottom:6px}
+.modal .box .steps a{color:var(--blue)}
+.modal .box code{background:var(--sky);padding:1px 6px;border-radius:6px;direction:ltr;display:inline-block}
+.modal .box .fld{margin-bottom:10px;text-align:right}
+.modal .box .note2{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+.modal .box .row{display:flex;gap:8px;flex-wrap:wrap}
+.modal .box .row .sp{flex:1}
+.modal .box .row.col{flex-direction:column}
+#syncBtn.ok{color:var(--done);border-color:#bfe0c9}
+#syncBtn.warn{color:#9a6a08;border-color:#f0d9a0}
+#syncBtn.err{color:var(--not);border-color:#f3c2c2}
 /* PDF render surface (off-screen) */
 .pdfdoc{position:fixed;top:0;left:-12000px;width:794px;padding:0 40px;background:#fff;color:#1b2a41;direction:rtl;font-family:'Tajawal',Arial,sans-serif;font-size:14px;line-height:1.6}
 .pdfdoc .pd-head{text-align:center;border-bottom:3px solid #0d2f63;padding-bottom:10px;margin-bottom:12px}
@@ -308,7 +322,8 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
       <button class="chip" data-f="appr">يحتاج اعتماد</button>
       <button class="chip" data-f="not">لم يتم</button>
     </div>
-    <button class="btn btn-ghost" id="resetBtn">↺ إعادة التعيين</button>
+    <div class="filters"><button class="btn btn-ghost hide" id="syncBtn">☁️ المزامنة: <span id="syncSt">غير مفعّلة</span></button>
+    <button class="btn btn-ghost" id="resetBtn">↺ إعادة التعيين</button></div>
   </div>
 
   <div id="phases"></div>
@@ -356,6 +371,29 @@ table.ed td .sigbtn{min-height:34px;min-width:110px}
     <button class="btn btn-ghost" id="sigRemove" style="color:#c33">حذف التوقيع</button>
     <button class="btn btn-ghost" id="sigCancel">إلغاء</button>
   </div></div></div>
+<div class="modal" id="syncModal"><div class="box syncbox">
+  <h4>☁️ مزامنة البيانات بين الأجهزة</h4>
+  <p>تُحفظ البيانات في مستودع <b>خاص</b> على GitHub، فيراها كل جهاز يُدخل نفس المفتاح.</p>
+  <ol class="steps">
+    <li>أنشئ مستودعًا <b>Private</b> باسم <code>abtal-alqura-data</code> من <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a>.</li>
+    <li>أنشئ مفتاحًا من <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">صفحة المفاتيح</a>: في Repository access اختر <b>Only select repositories</b> ثم المستودع السابق، وفي Permissions اجعل <b>Contents</b> على <b>Read and write</b>، ثم Generate وانسخ المفتاح.</li>
+    <li>ألصقه هنا واضغط «حفظ واتصال». كرّر الخطوة الأخيرة فقط على كل جهاز.</li>
+  </ol>
+  <div class="fld"><label>المستودع</label><input id="syncRepo" dir="ltr" placeholder="aassiry13-crypto/abtal-alqura-data"></div>
+  <div class="fld"><label>المفتاح (Token)</label><input id="syncToken" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_..."></div>
+  <p class="note2">يُحفظ المفتاح في هذا الجهاز فقط. لا تشاركه إلا مع أعضاء اللجنة بطريقة خاصة.</p>
+  <div class="row"><button class="btn btn-green" id="syncConnect">حفظ واتصال</button>
+    <button class="btn btn-ghost" id="syncPullBtn">🔄 تحميل أحدث نسخة</button><span class="sp"></span>
+    <button class="btn btn-ghost" id="syncOff" style="color:#c33">إيقاف المزامنة</button>
+    <button class="btn btn-ghost" id="syncClose">إغلاق</button></div>
+</div></div>
+<div class="modal" id="conflictModal"><div class="box">
+  <h4>عُدّلت البيانات من جهاز آخر</h4>
+  <p>حُفظت تغييرات من جهاز آخر بعد آخر مزامنة لهذا الجهاز، وفي هذا الجهاز تغييرات لم تُرفع. أي نسخة تعتمد؟</p>
+  <div class="row col"><button class="btn btn-primary" id="cfTheirs">⬇ اعتماد نسخة الجهاز الآخر (تُلغى تغييرات هذا الجهاز)</button>
+    <button class="btn btn-ghost" id="cfMine">⬆ اعتماد نسخة هذا الجهاز (تُستبدل نسخة الجهاز الآخر)</button>
+    <button class="btn btn-ghost" id="cfCancel">لاحقًا</button></div>
+</div></div>
 <div class="toast" id="toast"></div>
 
 <script data-app>
@@ -732,7 +770,7 @@ function render(){
 }
 
 /* ================= Saving ================= */
-function markDirty(){dirty=true;$("savebar").classList.add("show")}
+function markDirty(){dirty=true;$("savebar").classList.add("show"); const b=$("saveBtn"); if(b) b.textContent=syncOn()?"💾 حفظ ومزامنة":"💾 حفظ"}
 function pruneFiles(){
   const used=new Set();
   Object.entries(state.sheets).forEach(([id,s])=>{ const S=SHEETS[id]; if(S&&S.att!==undefined) (s.rows||[]).forEach(r=>{ if(isFile(r[S.att])) used.add(r[S.att].slice(5)) }) });
@@ -750,7 +788,8 @@ async function persist(){
   let ok=true;
   try{ await idb.set(KEY,JSON.parse(JSON.stringify(state))) }catch(e){ ok=false; try{localStorage.setItem(KEY,JSON.stringify(state)); ok=true}catch(e2){} }
   dirty=false; $("savebar").classList.remove("show");
-  if(!artifactNS){ toast(ok?"تم الحفظ في هذا الجهاز ✔":"تعذّر الحفظ في هذا المتصفح — خذ نسخة احتياطية"); return ok }
+  if(syncOn()){ sync.pending=true; saveSync(); return pushNow() }
+  if(!artifactNS){ toast(ok?"تم الحفظ في هذا الجهاز ✔ (فعّل «المزامنة» لتظهر في الأجهزة الأخرى)":"تعذّر الحفظ في هذا المتصفح — خذ نسخة احتياطية"); return ok }
   toast("جارٍ الحفظ للجميع…");
   try{ await artifactNS.publish(buildHTML()); return true }
   catch(e){ const code=e&&e.code;
@@ -996,6 +1035,110 @@ function bindSig(){
   };
 }
 
+/* ================= Cloud sync (private GitHub repo) ================= */
+const SYNC_KEY="abtal-qura-sync";
+let sync=(()=>{try{return readJSON(localStorage.getItem(SYNC_KEY))}catch(e){return {}}})();
+const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
+const syncOn=()=>!IN_CLAUDE&&!!(sync.repo&&sync.token);
+const SYNC_FILE="data.json";
+function utf8ToB64(str){ const b=new TextEncoder().encode(str); let s=""; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s) }
+function b64ToUtf8(b64){ const bin=atob(b64.replace(/\s/g,"")), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return new TextDecoder().decode(u) }
+async function gh(path,opt={}){
+  const h={Authorization:"Bearer "+sync.token,"X-GitHub-Api-Version":"2022-11-28",Accept:opt.accept||"application/vnd.github+json"};
+  if(opt.body) h["Content-Type"]="application/json";
+  return fetch("https://api.github.com"+path,{method:opt.method||"GET",headers:h,body:opt.body,cache:"no-store"});
+}
+const repoPath=()=>"/repos/"+sync.repo.split("/").map(encodeURIComponent).join("/");
+async function pullRemote(){
+  const m=await gh(`${repoPath()}/contents/${SYNC_FILE}`);
+  if(m.status===404){ const r=await gh(repoPath()); if(!r.ok) throw {status:r.status,repo:true}; return {sha:null,data:null} }
+  if(!m.ok) throw {status:m.status};
+  const meta=await m.json(); let text;
+  if(meta.content&&meta.encoding==="base64") text=b64ToUtf8(meta.content);
+  else{ const r=await gh(`${repoPath()}/contents/${SYNC_FILE}`,{accept:"application/vnd.github.raw+json"}); if(!r.ok) throw {status:r.status}; text=await r.text() }
+  return {sha:meta.sha,data:readJSON(text)};
+}
+async function pushRemote(){
+  const body={message:"تحديث بيانات خطة الإغلاق — "+new Date().toISOString(),content:utf8ToB64(JSON.stringify(state))};
+  if(sync.sha) body.sha=sync.sha;
+  const r=await gh(`${repoPath()}/contents/${SYNC_FILE}`,{method:"PUT",body:JSON.stringify(body)});
+  if(r.status===409||r.status===422) throw {conflict:true,status:r.status};
+  if(!r.ok) throw {status:r.status};
+  const j=await r.json(); sync.sha=j.content.sha; sync.pending=false; sync.at=Date.now(); saveSync();
+}
+function syncStatus(kind,text){
+  const b=$("syncBtn"); if(!b) return;
+  b.classList.toggle("hide",IN_CLAUDE); b.classList.remove("ok","warn","err"); if(kind) b.classList.add(kind);
+  $("syncSt").textContent=text;
+}
+function refreshSyncStatus(){
+  if(!syncOn()) return syncStatus("","غير مفعّلة");
+  if(sync.pending) return syncStatus("warn","تغييرات لم تُرفع");
+  const t=sync.at?new Date(sync.at).toLocaleTimeString("ar-SA-u-nu-latn",{hour:"2-digit",minute:"2-digit"}):"";
+  syncStatus("ok","متزامنة ✔ "+t);
+}
+const syncErrMsg=e=>e&&e.status===401?"المفتاح غير صالح أو انتهت صلاحيته":e&&(e.status===403||e.status===404)?"المستودع غير موجود أو المفتاح لا يملك صلاحية عليه":"تعذّر الاتصال بـGitHub؛ تحقّق من الإنترنت";
+function localHasData(){ return Object.keys(state.s||{}).length>0||Object.keys(state.sheets||{}).length>0||Object.keys(state.sign||{}).length>0 }
+function rerenderAll(){
+  document.querySelectorAll("[data-sg]").forEach(el=>el.value=state.sign[el.dataset.sg]||"");
+  renderFinalSigs(); render();
+}
+let pendingRemote=null;
+async function adoptRemote(r){
+  state=migrate18(r.data); sync.sha=r.sha; sync.pending=false; sync.at=Date.now(); saveSync();
+  try{ await idb.set(KEY,JSON.parse(JSON.stringify(state))) }catch(e){}
+  dirty=false; $("savebar").classList.remove("show"); rerenderAll(); refreshSyncStatus();
+}
+async function syncPull(manual){
+  if(!syncOn()) return;
+  if(manual) toast("جارٍ تحميل أحدث نسخة…");
+  let r; try{ r=await pullRemote() }catch(e){ syncStatus("err","خطأ"); if(manual) toast(syncErrMsg(e)); return }
+  if(!r.data){ // remote empty
+    if(localHasData()){ sync.pending=true; saveSync(); await pushNow(); } else { sync.sha=null; saveSync(); refreshSyncStatus(); if(manual) toast("لا توجد بيانات محفوظة في السحابة بعد"); }
+    return;
+  }
+  if(r.sha===sync.sha&&!sync.pending){ refreshSyncStatus(); if(manual) toast("لديك أحدث نسخة ✔"); return }
+  if(sync.pending||(dirty&&r.sha!==sync.sha)){
+    if(r.sha===sync.sha){ if(sync.pending) await pushNow(); else refreshSyncStatus(); return } // nothing new remotely: send local changes
+    pendingRemote=r; $("conflictModal").classList.add("open"); return;
+  }
+  await adoptRemote(r); toast("تم تحميل أحدث نسخة من الأجهزة الأخرى ✔");
+}
+async function pushNow(){
+  syncStatus("warn","جارٍ الرفع…");
+  try{ await pushRemote(); refreshSyncStatus(); toast("تم الحفظ والمزامنة ✔ ستظهر التغييرات في الأجهزة الأخرى"); return true }
+  catch(e){
+    if(e&&e.conflict){ try{ pendingRemote=await pullRemote(); }catch(_){ pendingRemote=null }
+      if(pendingRemote&&pendingRemote.data){ $("conflictModal").classList.add("open"); syncStatus("warn","تعارض") ; return false }
+      sync.sha=pendingRemote?pendingRemote.sha:null; saveSync(); return pushNow(); }
+    syncStatus("err","لم تُرفع"); toast("حُفظ في هذا الجهاز فقط — "+syncErrMsg(e)); return false;
+  }
+}
+function bindSync(){
+  if(IN_CLAUDE) return;
+  const m=$("syncModal");
+  $("syncBtn").onclick=()=>{ $("syncRepo").value=sync.repo||"aassiry13-crypto/abtal-alqura-data"; $("syncToken").value=sync.token||""; $("syncOff").classList.toggle("hide",!syncOn()); $("syncPullBtn").classList.toggle("hide",!syncOn()); m.classList.add("open") };
+  $("syncClose").onclick=()=>m.classList.remove("open");
+  $("syncConnect").onclick=async()=>{
+    const repo=trim($("syncRepo").value).replace(/^https?:\/\/github\.com\//,"").replace(/\/+$/,""), token=trim($("syncToken").value);
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){ toast("اكتب المستودع بالشكل: الحساب/الاسم"); return }
+    if(!token){ toast("ألصق المفتاح أولًا"); return }
+    const prev={...sync}; sync={repo,token,sha:null,pending:localHasData(),at:0};
+    toast("جارٍ الاتصال…");
+    try{ const r=await gh(repoPath()); if(!r.ok) throw {status:r.status}; }
+    catch(e){ sync=prev; toast(syncErrMsg(e)); return }
+    saveSync(); m.classList.remove("open"); toast("تم الاتصال ✔"); await syncPull(false); refreshSyncStatus();
+  };
+  $("syncPullBtn").onclick=()=>{ m.classList.remove("open"); syncPull(true) };
+  $("syncOff").onclick=()=>{ sync={}; saveSync(); m.classList.remove("open"); refreshSyncStatus(); toast("أُوقفت المزامنة في هذا الجهاز") };
+  $("cfTheirs").onclick=async()=>{ $("conflictModal").classList.remove("open"); if(pendingRemote&&pendingRemote.data){ await adoptRemote(pendingRemote); toast("اعتُمدت نسخة الجهاز الآخر ✔") } pendingRemote=null };
+  $("cfMine").onclick=async()=>{ $("conflictModal").classList.remove("open"); if(pendingRemote) sync.sha=pendingRemote.sha; sync.pending=true; saveSync(); pendingRemote=null; await pushNow() };
+  $("cfCancel").onclick=()=>{ $("conflictModal").classList.remove("open"); pendingRemote=null; refreshSyncStatus() };
+  let lastPull=Date.now();
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&syncOn()&&!dirty&&cur===null&&!sync.pending&&Date.now()-lastPull>15000){ lastPull=Date.now(); syncPull(false) } });
+  refreshSyncStatus();
+}
+
 /* ================= Library loader ================= */
 function loadScript(urls,globalName){
   return new Promise((res,rej)=>{
@@ -1178,9 +1321,11 @@ async function boot(){
   if(!IN_CLAUDE) document.querySelectorAll(".dl").forEach(b=>b.classList.remove("hide"));
   renderFinalSigs();
   render();
+  bindSync();
   window.__ready=true;
+  if(syncOn()){ if(sync.pending) refreshSyncStatus(); await syncPull(false); }
 }
-window.__t={state:()=>state,setState:s=>{state=migrate18(s);render()},buildDoc,buildHTML,openSheet,model,tourney,exportPDF,persist,ids:()=>ALL.map(a=>a.id)};
+window.__t={syncPull:m=>syncPull(m),state:()=>state,setState:s=>{state=migrate18(s);render()},buildDoc,buildHTML,openSheet,model,tourney,exportPDF,persist,ids:()=>ALL.map(a=>a.id)};
 boot();
 </script>
 </body>
